@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.6.2](https://github.com/BrassTack/setddblock/compare/v0.6.1...v0.6.2) - 2024-11-15
+- logging update, linter update by @keen99 in https://github.com/BrassTack/setddblock/pull/6
+
+## [v0.6.1](https://github.com/BrassTack/setddblock/compare/v0.6.0...v0.6.1) - 2024-11-15
+- Enhance CLI tool logging by @keen99 in https://github.com/BrassTack/setddblock/pull/4
+
+## [v0.5.1](https://github.com/BrassTack/setddblock/compare/v0.5.0...v0.5.1) - 2024-11-13
+- Update README.md - add DeleteItem by @keen99 in https://github.com/BrassTack/setddblock/pull/1
+- Enhanced Lock Request Handling with TTL Consideration by @keen99 in https://github.com/BrassTack/setddblock/pull/2
+
 ## [v0.5.0](https://github.com/mashiike/setddblock/compare/v0.4.0...v0.5.0) - 2024-02-27
 - README.md is lye. short flags -nX can not use. fix this by @mashiike in https://github.com/mashiike/setddblock/pull/138
 - Bump gopkg.in/yaml.v3 from 3.0.0-20200313102051-9f266ea9e77c to 3.0.0 by @dependabot in https://github.com/mashiike/setddblock/pull/101

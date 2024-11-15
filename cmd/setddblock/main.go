@@ -42,7 +42,7 @@ func _main() int {
 	flag.BoolVar(&versionFlag, "version", false, "show version")
 	flag.StringVar(&endpoint, "endpoint", "", "If you switch remote, set AWS DynamoDB endpoint url.")
 	flag.StringVar(&region, "region", "", "aws region")
-	flag.StringVar(&timeout, "timeout", "", "set command timeout")
+	flag.StringVar(&timeout, "timeout", "", "set command timeout (e.g., 30s, 1m, 2h)")
 
 	args := make([]string, 1, len(os.Args))
 	args[0] = os.Args[0]
@@ -136,6 +136,7 @@ func _main() int {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, t)
 		defer cancel()
+		logger.Printf("[debug][setddblock] command timeout set to %s", t)
 	}
 	lockGranted, err := locker.LockWithErr(ctx)
 	if err != nil {
@@ -143,13 +144,31 @@ func _main() int {
 		return 6
 	}
 	if !lockGranted {
-		logger.Println("[warn][setddblock] lock was not granted")
+		lockDetails, err := locker.GetLockDetails(ctx)
+		if err != nil {
+			logger.Println("[error][setddblock] failed to retrieve lock details:", err)
+			return 4
+		}
+		logger.Printf("[warn][setddblock] lock was not granted for item_id=%s. TTL: %d, Expires: %s, Revision: %s",
+			locker.ItemID(),
+			lockDetails.TTL,
+			lockDetails.ExpirationTime.Format(time.RFC3339),
+			lockDetails.Revision,
+		)
 		if x && !X {
 			return 0
 		}
 		return 3
 	}
-	defer locker.Unlock()
+	logger.Printf("[info][setddblock] lock granted for item_id=%s",
+		locker.ItemID(),
+	)
+	defer func() {
+		logger.Printf("[info][setddblock] releasing lock for item_id=%s",
+			locker.ItemID(),
+		)
+		locker.Unlock()
+	}()
 
 	cmd := exec.CommandContext(ctx, args[1], args[2:]...)
 	cmd.Stdin = os.Stdin
@@ -158,7 +177,10 @@ func _main() int {
 
 	err = cmd.Run()
 	if err != nil {
-		logger.Printf("[error][setddblock] setddblock: fatal: unable to run %s\n", err)
+		if ctx.Err() == context.DeadlineExceeded {
+			logger.Printf("[error][setddblock] timeout of %s exceeded", timeout)
+		}
+		logger.Printf("[error][setddblock] setddblock: fatal: unable to run, %s, %s\n", err, ctx.Err())
 		return 5
 	}
 	return 0
